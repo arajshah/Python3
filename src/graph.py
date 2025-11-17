@@ -8,8 +8,16 @@ class Cell(object):
         self.j = j  # y-axis index (row)
 
 
-"""TODO: You may consider defining a class to store your node data. If so, do
-that here."""
+class Node(object):
+    """Class to store node data for graph search algorithms."""
+    def __init__(self, i, j):
+        self.i = i  # x-axis index (column)
+        self.j = j  # y-axis index (row)
+        self.parent = None  # Parent node for path tracing
+        self.g_cost = float('inf')  # Cost from start to this node
+        self.h_cost = 0  # Heuristic cost from this node to goal
+        self.f_cost = float('inf')  # Total cost (g + h) for A*
+        self.visited = False  # Whether this node has been visited
 
 
 class GridGraph:
@@ -45,7 +53,8 @@ class GridGraph:
         self.set_collision_radius(collision_radius)
         self.visited_cells = []  # Stores which cells have been visited in order for visualization.
 
-        # TODO: Define any additional member variables to store node data.
+        # Store node data as a 2D array of Node objects
+        self.nodes = None
 
     def as_string(self):
         """Returns the map data as a string for visualization."""
@@ -154,8 +163,18 @@ class GridGraph:
         """Returns a Cell object representing the parent of the given cell, or
         None if the node has no parent. This function is used to trace back the
         path after graph search."""
-        # TODO (P3): Return the parent of the node at the cell.
-        return None
+        if self.nodes is None:
+            return None
+        
+        # Check if cell is in bounds
+        if not self.is_cell_in_bounds(cell.i, cell.j):
+            return None
+        
+        node = self.nodes[cell.j][cell.i]
+        if node.parent is None:
+            return None
+        
+        return Cell(node.parent.i, node.parent.j)
 
     def init_graph(self):
         """Initializes the node data in the graph in preparation for graph search.
@@ -166,15 +185,30 @@ class GridGraph:
         values, like the distances and the nodes."""
         self.visited_cells = []  # Reset visited cells for visualization.
 
-        # TODO (P3): Initialize your graph nodes.
+        # Initialize the 2D array of nodes
+        self.nodes = [[Node(i, j) for i in range(self.width)] for j in range(self.height)]
 
     def find_neighbors(self, i, j):
         """Returns a list of the neighbors of the given cell. This should not
         include any cells outside of the bounds of the graph."""
         nbrs = []
-        # TODO (P3): Return a list of the indices of all the neighbors of the node
-        # at cell (i, j). You should not include any cells that are outside of the
-        # bounds of the graph.
-
-        # HINT: The function is_cell_in_bounds() might come in handy.
+        
+        # Check all 8 neighbors (4-connected + diagonals)
+        # We'll use 8-connectivity for more path options
+        directions = [
+            (-1, 0),   # left
+            (1, 0),    # right
+            (0, -1),   # down
+            (0, 1),    # up
+            (-1, -1),  # bottom-left
+            (-1, 1),   # top-left
+            (1, -1),   # bottom-right
+            (1, 1)     # top-right
+        ]
+        
+        for di, dj in directions:
+            ni, nj = i + di, j + dj
+            if self.is_cell_in_bounds(ni, nj):
+                nbrs.append((ni, nj))
+        
         return nbrs
